@@ -11,11 +11,15 @@
 #endif
 
 #include "../User/User.h"
+#include <winsock.h>
 
 class Client : public User
 {
 public:
 	void Run();
+private:
+	SOCKET sock;
+	void Stop();
 };
 
 extern "C" CLIENT_API User* GenerateUser();

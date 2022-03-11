@@ -9,7 +9,7 @@
 /// <param name="min">Inclusive min</param>
 /// <param name="max">Inclusive max</param>
 /// <returns>An integer for the user's input</returns>
-int ReadInteger(const char* prompt, const int min, const int max)
+int ReadInteger(const char* prompt, const int min = -INT_MAX, const int max = INT_MAX)
 {
 	std::cout << prompt << std::endl;
 

@@ -10,11 +10,17 @@
 #define SERVER_API __declspec(dllimport)
 #endif
 
+#include <vector>
 #include "../User/User.h"
 
 class Server : public User
 {
+public:
 	void Run();
+private:
+	SOCKET listenSocket;
+	std::vector<SOCKET> acceptedSockets;
+	void Stop();
 };
 
 extern "C" SERVER_API User * GenerateUser();

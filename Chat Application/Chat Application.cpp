@@ -49,6 +49,11 @@ int main()
 
 	user = GenerateUserFunction();
 	
+	WSADATA data;
+	int ret = WSAStartup(WINSOCK_VERSION, &data);
+	if (ret == SOCKET_ERROR)
+		return -1;
+
 	user->Run();
 
 	delete user;
