@@ -10,4 +10,9 @@ public:
     virtual void Run() = 0;
 private:
     virtual void Stop() = 0;
+protected:
+    void Clear()
+    { 
+        std::cout << "\x1B[2J\x1B[H";
+    }
 };

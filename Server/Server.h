@@ -21,6 +21,9 @@ private:
 	SOCKET listenSocket;
 	std::vector<SOCKET> acceptedSockets;
 	void Stop();
+	FD_SET master;
+	FD_SET read;
+	FD_SET write;
 };
 
 extern "C" SERVER_API User * GenerateUser();

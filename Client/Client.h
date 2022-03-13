@@ -20,6 +20,7 @@ public:
 private:
 	SOCKET sock;
 	void Stop();
+	void ConnectToServer();
 };
 
 extern "C" CLIENT_API User* GenerateUser();

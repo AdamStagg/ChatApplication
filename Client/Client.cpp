@@ -7,6 +7,15 @@
 
 void Client::Run()
 {
+	Client::ConnectToServer();
+
+
+
+	Client::Stop();
+}
+
+void Client::ConnectToServer()
+{
 	while (true)
 	{
 		std::string username = ReadString("Enter a username:");
@@ -17,8 +26,9 @@ void Client::Run()
 		sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (sock == SOCKET_ERROR)
 		{
+			User::Clear();
 			std::cout << "SETUP ERROR: CLIENT" << std::endl;
-			return;
+			continue;
 		}
 
 		sockaddr_in sadd = {};
@@ -34,8 +44,9 @@ void Client::Run()
 
 		if (sadd.sin_addr.s_addr == INADDR_NONE)
 		{
+			User::Clear();
 			std::cout << "ADDRESS ERROR: CLIENT" << std::endl;
-			return;
+			continue;
 		}
 
 		int result = connect(sock, (SOCKADDR*)&sadd, sizeof(sadd));
@@ -43,18 +54,20 @@ void Client::Run()
 		{
 			if (WSAGetLastError() == WSAESHUTDOWN)
 			{
+				User::Clear();
 				std::cout << "SHUTDOWN: CLIENT" << std::endl;
-				return;
+				continue;
 			}
+			User::Clear();
 			std::cout << "CONNECT ERROR: CLIENT" << std::endl;
-			return;
+			continue;
 		}
 
+		User::Clear();
+		
 		std::cout << "CLIENT SUCCESSFULLY CONNECTED" << std::endl;
+		break;
 	}
-
-
-	Client::Stop();
 }
 
 void Client::Stop()

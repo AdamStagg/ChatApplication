@@ -14,6 +14,7 @@ void Server::Run()
 
 		if (listenSocket == SOCKET_ERROR)
 		{
+			User::Clear();
 			std::cout << "INIT SETUP ERROR: SERVER" << std::endl;
 			return;
 		}
@@ -26,6 +27,7 @@ void Server::Run()
 		int result = bind(listenSocket, (SOCKADDR*)&sadd, sizeof(sadd));
 		if (result == SOCKET_ERROR)
 		{
+			User::Clear();
 			std::cout << "BIND ERROR: SERVER" << std::endl;
 			return;
 		}
@@ -33,24 +35,74 @@ void Server::Run()
 		result = listen(listenSocket, 1);
 		if (result == SOCKET_ERROR)
 		{
+			User::Clear();
 			std::cout << "LISTEN SETUP ERROR: SERVER" << std::endl;
 		}
+		break;
+	}
 
-		SOCKET s = accept(listenSocket, nullptr, NULL);
-		if (s == INVALID_SOCKET)
+	FD_ZERO(&master);
+	FD_ZERO(&read);
+	FD_ZERO(&write);
+
+	FD_SET(listenSocket, &master);
+
+	for (;;)
+	{
+		FD_ZERO(&read);
+		for (size_t i = 0; i < master.fd_count; i++)
 		{
-			if (WSAGetLastError() == WSAESHUTDOWN)
-			{
-				std::cout << "SHUTDOWN: SERVER" << std::endl;
-				return;
-			}
-			std::cout << "ACCEPT SETUP ERROR: SERVER" << std::endl;
-			return;
+			FD_SET(master.fd_array[i], &read);
 		}
-		acceptedSockets.push_back(s);
-		std::cout << "SOCKET CONNECTED" << std::endl;
+
+		timeval timer = {};
+		timer.tv_sec = NULL;
+		
+		int numSockets = select(FD_SETSIZE, &read, nullptr, nullptr, &timer);
+
+		for (size_t i = 0; i < numSockets; i++)
+		{
+			if (FD_ISSET(listenSocket, &read))
+			{
+				SOCKET s = accept(listenSocket, nullptr, NULL);
+				if (s == INVALID_SOCKET)
+				{
+					if (WSAGetLastError() == WSAESHUTDOWN)
+					{
+						User::Clear();
+						std::cout << "SHUTDOWN: SERVER" << std::endl;
+						return;
+					}
+					User::Clear();
+					std::cout << "ACCEPT SETUP ERROR: SERVER" << std::endl;
+					return;
+				}
+				acceptedSockets.push_back(s);
+				FD_SET(s, &master);
+				std::cout << "SOCKET CONNECTED" << std::endl;
+			}
+		}
+
 
 	}
+
+	/*SOCKET s = accept(listenSocket, nullptr, NULL);
+	if (s == INVALID_SOCKET)
+	{
+		if (WSAGetLastError() == WSAESHUTDOWN)
+		{
+			User::Clear();
+			std::cout << "SHUTDOWN: SERVER" << std::endl;
+			return;
+		}
+		User::Clear();
+		std::cout << "ACCEPT SETUP ERROR: SERVER" << std::endl;
+		return;
+	}
+	acceptedSockets.push_back(s);
+	std::cout << "SOCKET CONNECTED" << std::endl;*/
+
+
 
 	Server::Stop();
 }

@@ -23,12 +23,12 @@ int main()
 	switch (chatMode)
 	{
 	case ChatModes::Server:
-		hGetProcIDDLL = LoadLibrary(L"Server.dll");
+		hGetProcIDDLL = LoadLibraryW(L"Server.dll");
 		break;
 	default:
 	case ChatModes::COUNT:
 	case ChatModes::Client:
-		hGetProcIDDLL = LoadLibrary(L"Client.dll");
+		hGetProcIDDLL = LoadLibraryW(L"Client.dll");
 		break;
 	}
 
@@ -37,7 +37,7 @@ int main()
 		std::cout << "Could not load the library." << std::endl;
 		return EXIT_FAILURE;
 	}
-
+	
 	typedef User* (*uptr)();
 	uptr GenerateUserFunction = reinterpret_cast<uptr>((GetProcAddress(hGetProcIDDLL, "GenerateUser")));
 	
