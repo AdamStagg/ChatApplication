@@ -4,12 +4,19 @@
 #include "framework.h"
 #include "Client.h"
 #include <WS2tcpip.h>
+#include <iostream>
+#include <string>
 
 void Client::Run()
 {
 	Client::ConnectToServer();
-
-
+	char* userInput = new char[256];
+	std::cin.clear();
+	std::cin.ignore(INT_MAX, '\n');
+	std::cin.getline(userInput, 256);
+	sendMessage(sock, userInput, sizeofString(userInput, 256) - 1);
+	
+	for (;;);
 
 	Client::Stop();
 }
@@ -80,4 +87,33 @@ User* GenerateUser()
 {
 	return new Client();
 }
+/// <summary>
+/// Sends a message to the server
+/// 
+/// <h>
+/// HEADER FORMAT:
+/// 32 bits for message type (message = 100, command = 200)
+/// 32 bits for size of message
+/// 32 bits for size of username (if message type is message)
+/// </h>
+/// </summary>
+void Client::sendMessage(SOCKET sock, char* buff, const int32_t length)
+{
+	std::string message;
+	char m = (char)100;
+	char len = (char&)length;
+	char* arr = new char[length + 3];
 
+	arr[0] = m;
+	arr[1] = len;
+	for (size_t i = 0; i < length; i++)
+	{
+		arr[i + 2] = buff[i];
+	}
+	arr[length + 2] = '\0';
+	//message += (char*)&length;
+	//message += buff;
+	int t = 0;
+	send(sock, arr, length + 3, 0);
+	delete[] arr;
+}

@@ -50,3 +50,23 @@ std::string ReadString(const char* prompt)
 	}
 	return result;
 }
+
+/// <summary>
+/// Gets the size of a string stored in a char*
+/// </summary>
+/// <param name="buffer">A null terminated string to check the length of</param>
+/// <param name="maxLength">The size of the array</param>
+/// <returns>The size of the string</returns>
+int sizeofString(char* buffer, int maxLength)
+{
+	int counter = 0;
+	for (size_t i = 0; i < maxLength; i++)
+	{
+		counter++;
+		if (buffer[i] == '\0')
+		{
+			return counter;
+		}
+	}
+	return maxLength;
+}

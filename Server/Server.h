@@ -24,6 +24,7 @@ private:
 	FD_SET master;
 	FD_SET read;
 	FD_SET write;
+	void readMessage(SOCKET sock, char*& buff);
 };
 
 extern "C" SERVER_API User * GenerateUser();

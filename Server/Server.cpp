@@ -6,9 +6,10 @@
 
 void Server::Run()
 {
+	uint16_t port;
 	while (true)
 	{
-		uint16_t port = static_cast<uint16_t>(ReadInteger("Enter a port: 0-99999", 0, 99999));
+		port = static_cast<uint16_t>(ReadInteger("Enter a port: 0-99999", 0, 99999));
 
 		listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -40,6 +41,8 @@ void Server::Run()
 		}
 		break;
 	}
+
+	std::cout << "Server opened on port " << port << "."<< std::endl;
 
 	FD_ZERO(&master);
 	FD_ZERO(&read);
@@ -79,7 +82,14 @@ void Server::Run()
 				}
 				acceptedSockets.push_back(s);
 				FD_SET(s, &master);
-				std::cout << "SOCKET CONNECTED" << std::endl;
+				std::cout << "Socket " << s << " connected." << std::endl;
+			}
+			else
+			{
+				char* message = nullptr;
+				readMessage(read.fd_array[i], message);
+				std::cout << "Socket " << read.fd_array[i] << ": " << message << std::endl;
+				delete[] message;
 			}
 		}
 
@@ -122,4 +132,29 @@ void Server::Stop()
 User* GenerateUser()
 {
 	return new Server();
+}
+
+void Server::readMessage(SOCKET sock, char*& buff)
+{
+	std::string test;
+	test.resize(16);
+	int8_t header[2];
+	int result = recv(sock, (char*)header, 2, 0);
+
+	if (header[0] == 100)
+	{
+		buff = new char[header[1] + 1];
+		int result = recv(sock, buff, header[1] + 1, 0);
+		return;
+	}
+
+	result = recv(sock, (char*)&test, sizeof(test), 0);
+	if (result <= 0)
+	{
+		std::cout << "Socket " << sock << " disconnected" << std::endl;
+		FD_CLR(sock, &master);
+		std::remove(acceptedSockets.begin(), acceptedSockets.end(), sock);
+		return;
+	}
+	std::cout << test << std::endl;
 }

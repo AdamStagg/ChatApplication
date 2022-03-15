@@ -21,6 +21,7 @@ private:
 	SOCKET sock;
 	void Stop();
 	void ConnectToServer();
+	void sendMessage(SOCKET sock, char* buff, const int32_t length);
 };
 
 extern "C" CLIENT_API User* GenerateUser();
