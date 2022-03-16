@@ -86,7 +86,7 @@ void Server::Run()
 				FD_SET(s, &master);
 				acceptedSockets[s] = {nullptr};
 				std::cout << "Socket " << s << " connected." << std::endl;
-				AddToFile((char*)[&]() -> std::string {std::string str = "Socket "; str += s; str+= " connected.\n"; return str; }().c_str()); // TODO
+				AddToFile((char*)[&]() -> std::string {std::string str = "Socket "; str += (char*)&s; str+= " connected.\n"; return str; }().c_str()); // TODO
 
 			}
 			else
@@ -221,7 +221,7 @@ void Server::readMessage(SOCKET sock, char*& buff)
 		if (result <= 0)
 		{
 			std::cout << "Socket " << sock << " disconnected" << std::endl;
-			AddToFile((char*)[&]() -> std::string {std::string s = "Socket " + s + " disconnected.\n"; return s; }().c_str()); // TODO
+			//AddToFile((char*)[&]() -> std::string {std::string s = "Socket " + s + " disconnected.\n"; return s; }().c_str()); // TODO
 			FD_CLR(sock, &master);
 			RemoveUser(sock);
 			return;
@@ -234,7 +234,7 @@ void Server::readMessage(SOCKET sock, char*& buff)
 	if (result <= 0)
 	{
 		std::cout << "Socket " << sock << " disconnected" << std::endl;
-		AddToFile((char*)[&]() -> std::string {std::string s = "Socket " + s + " disconnected.\n"; return s; }().c_str()); // TODO
+		//AddToFile((char*)[&]() -> std::string {std::string s = "Socket " + s + " disconnected.\n"; return s; }().c_str()); // TODO
 		FD_CLR(sock, &master);
 		RemoveUser(sock);
 		return;
@@ -302,13 +302,13 @@ bool Server::UserRegistered(SOCKET s)
 
 void Server::AddToFile(char* buff)
 {
-	//FILE* pFile;
-	//errno_t err = fopen_s(&pFile, fileName, "a");
-	//if (err == 0 && pFile)
-	//{
-	//	fputs(buff, pFile);
-	//	if (pFile) fclose(pFile);
-	//}
+	FILE* pFile;
+	errno_t err = fopen_s(&pFile, fileName, "a");
+	if (err == 0 && pFile)
+	{
+		fputs(buff, pFile);
+		if (pFile) fclose(pFile);
+	}
 }
 
 void Server::InitializeFile()

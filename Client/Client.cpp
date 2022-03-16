@@ -6,16 +6,20 @@
 #include <WS2tcpip.h>
 #include <iostream>
 #include <string>
+#include <thread>
 
 void Client::Run()
 {
 	Client::ConnectToServer();
 
-	std::cin.ignore(INT_MAX, '\n');
+	bool* stopThreadFlag = new bool(false);
+	std::thread(&Client::receiveMessage, this, stopThreadFlag).detach();
+
 	while (true)
 	{
 		char* userInput = new char[256];
 		std::cin.clear();
+		std::cout << username << ": ";
 		std::cin.getline(userInput, 256);
 		if (userInput && userInput[0] == '$')
 		{
@@ -28,25 +32,11 @@ void Client::Run()
 		if (strstr(userInput, "$exit") != nullptr) { break; }
 		delete[] userInput;
 
-		char* message;
 
-		FD_SET set;
-		FD_ZERO(&set);
-		FD_SET(sock, &set);
-		timeval timer;
-		timer.tv_sec = 0;
-
-		if (select(FD_SETSIZE, &set, nullptr, nullptr, &timer))
-		{
-			receiveEcho(sock, message);
-			if (message != nullptr)
-			{
-				//std::cout << "echo received" << std::endl;
-				std::cout << message << std::endl;
-			}
-		}
 		
 	}
+
+	(*stopThreadFlag) = true;
 	
 
 	Client::Stop();
@@ -56,7 +46,7 @@ void Client::ConnectToServer()
 {
 	while (true)
 	{
-		std::string username = ReadString("Enter a username:");
+		username = ReadString("Enter a username:");
 		std::string ipaddress = ReadString("Enter an IP address:");
 		uint16_t port = static_cast<uint16_t>(ReadInteger("Enter a port number: (0 - 99999)", 0, 99999));
 
@@ -106,6 +96,8 @@ void Client::ConnectToServer()
 		std::cout << "CLIENT SUCCESSFULLY CONNECTED" << std::endl;
 		break;
 	}
+
+	std::cin.ignore(INT_MAX, '\n');
 }
 
 void Client::Stop()
@@ -165,4 +157,27 @@ void Client::receiveEcho(SOCKET sock, char*& buff)
 		std::cout << "The server has been closed." << std::endl;
 		return;
 	}
+}
+
+void Client::receiveMessage(bool* stopFlag)
+{
+	FD_SET set;
+	FD_ZERO(&set);
+	FD_SET(sock, &set);
+	while (true)
+	{
+		if ((*stopFlag) == true) break;
+		char* message;
+
+		if (select(0, &set, nullptr, nullptr, nullptr))
+		{
+			receiveEcho(sock, message);
+			if (message != nullptr)
+			{
+				//std::cout << "echo received" << std::endl;
+				std::cout << message << std::endl;
+			}
+		}
+	}
+	delete stopFlag;
 }
