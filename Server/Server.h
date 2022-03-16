@@ -10,7 +10,7 @@
 #define SERVER_API __declspec(dllimport)
 #endif
 
-#include <vector>
+#include <map>
 #include "../User/User.h"
 
 class Server : public User
@@ -18,13 +18,24 @@ class Server : public User
 public:
 	void Run();
 private:
+	struct UserData
+	{
+		char* username;
+	};
 	SOCKET listenSocket;
-	std::vector<SOCKET> acceptedSockets;
+	std::map<SOCKET, UserData> acceptedSockets;
 	void Stop();
 	FD_SET master;
 	FD_SET read;
 	FD_SET write;
 	void readMessage(SOCKET sock, char*& buff);
+	void RemoveUser(SOCKET s);
+	void echoMessage(char* buff);
+	char* GetName(SOCKET s);
+	bool UserRegistered(SOCKET s);
+	void AddToFile(char* buf);
+	void InitializeFile();
+	char* fileName;
 };
 
 extern "C" SERVER_API User * GenerateUser();

@@ -22,6 +22,7 @@ private:
 	void Stop();
 	void ConnectToServer();
 	void sendMessage(SOCKET sock, char* buff, const int32_t length);
+	void receiveEcho(SOCKET sock, char*& buff);
 };
 
 extern "C" CLIENT_API User* GenerateUser();

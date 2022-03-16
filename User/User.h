@@ -17,6 +17,20 @@ public:
         SHUTDOWN,
         COUNT
     };
+    enum class MessageTypes
+    {
+        MESSAGE = 100,
+        COMMAND,
+        COUNT
+    };
+    enum class CommandTypes
+    {
+        REGISTER = 1000,
+        GETLOG,
+        GETLIST,
+        EXIT,
+        COUNT
+    };
 private:
     virtual void Stop() = 0;
 protected:

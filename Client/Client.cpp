@@ -10,13 +10,44 @@
 void Client::Run()
 {
 	Client::ConnectToServer();
-	char* userInput = new char[256];
-	std::cin.clear();
+
 	std::cin.ignore(INT_MAX, '\n');
-	std::cin.getline(userInput, 256);
-	sendMessage(sock, userInput, sizeofString(userInput, 256) - 1);
+	while (true)
+	{
+		char* userInput = new char[256];
+		std::cin.clear();
+		std::cin.getline(userInput, 256);
+		if (userInput && userInput[0] == '$')
+		{
+
+		}
+		else
+		{
+			sendMessage(sock, userInput, sizeofString(userInput, 256) - 1);
+		}
+		if (strstr(userInput, "$exit") != nullptr) { break; }
+		delete[] userInput;
+
+		char* message;
+
+		FD_SET set;
+		FD_ZERO(&set);
+		FD_SET(sock, &set);
+		timeval timer;
+		timer.tv_sec = 0;
+
+		if (select(FD_SETSIZE, &set, nullptr, nullptr, &timer))
+		{
+			receiveEcho(sock, message);
+			if (message != nullptr)
+			{
+				//std::cout << "echo received" << std::endl;
+				std::cout << message << std::endl;
+			}
+		}
+		
+	}
 	
-	for (;;);
 
 	Client::Stop();
 }
@@ -100,7 +131,7 @@ User* GenerateUser()
 void Client::sendMessage(SOCKET sock, char* buff, const int32_t length)
 {
 	std::string message;
-	char m = (char)100;
+	char m = static_cast<char>(MessageTypes::MESSAGE);
 	char len = (char&)length;
 	char* arr = new char[length + 3];
 
@@ -116,4 +147,22 @@ void Client::sendMessage(SOCKET sock, char* buff, const int32_t length)
 	int t = 0;
 	send(sock, arr, length + 3, 0);
 	delete[] arr;
+}
+
+void Client::receiveEcho(SOCKET sock, char*& buff)
+{
+	int8_t size;
+	int result = recv(sock, (char*)&size, 1, 0);
+	if (result <= 0)
+	{
+		std::cout << "The server has been closed." << std::endl;
+		return;
+	}
+	buff = new char[size + 1];
+	result = recv(sock, buff, size + 1, 0);
+	if (result <= 0)
+	{
+		std::cout << "The server has been closed." << std::endl;
+		return;
+	}
 }
