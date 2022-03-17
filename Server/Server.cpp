@@ -61,6 +61,7 @@ void Server::readMessage(SOCKET sock)
 	uint8_t messageType;
 
 	int bytesread = recv(sock, (char*)&messageType, 1, 0);
+	if (messageType == 0) return;
 	if (bytesread == SOCKET_ERROR || bytesread == 0)
 	{
 		oss << "Socket " << sock << " disconnected." << std::endl;
@@ -77,7 +78,7 @@ void Server::readMessage(SOCKET sock)
 	{
 		if (!UserRegistered(sock))
 		{
-			send(sock, "(You are not registered. Type $register\0", 40, 0);
+			send(sock, "2(You are not registered. Type $register\0", 41, 0);
 			char t[256];
 			recv(sock, t, 256, 0);
 			return;
@@ -93,6 +94,8 @@ void Server::readMessage(SOCKET sock)
 
 		//DISPLAY MESSAGE
 		oss << ((GetName(sock) != nullptr) ? GetName(sock) : ("Socket " + sock)) << ": " << message << std::endl;
+		std::ostringstream oss2;
+		oss2 << static_cast<char>(50) << static_cast<char>(sizeofString((char*)oss.str().c_str(), 256)) << ((GetName(sock) != nullptr) ? GetName(sock) : ("Socket " + sock)) << ": " << message << std::endl;
 		PrintAndWrite(oss.str().c_str());
 		//AddToFile((char*)[&]() -> std::string {std::string s = GetName(sock); s += ": "; s+= message; return s; }().c_str()); // TODO
 
@@ -108,16 +111,22 @@ void Server::readMessage(SOCKET sock)
 			SOCKET us = master.fd_array[s];
 			if (us != listenSocket && us != sock)
 			{
-				char* outmessage = new char[bytesread + 2];
-				outmessage[0] = static_cast<char>(messageLength);
-				memcpy(&outmessage[1], message, messageLength);
-				outmessage[messageLength + 1] = '\0';
-				int bytessend = send(us, outmessage, messageLength + 2, 0);
+	/*			char* otherSockName = acceptedSockets[us];
+				int sizeofOtherSockName = sizeofString(otherSockName, 256);
+				char* outmessage = new char[bytesread + 3 + sizeofOtherSockName];
+				outmessage[0] = static_cast<char>(50);
+				outmessage[1] = static_cast<char>(messageLength + sizeofOtherSockName + 2);
+				memcpy(&outmessage[2], otherSockName, sizeofOtherSockName);
+				outmessage[sizeofOtherSockName] = ':';
+				outmessage[sizeofOtherSockName + 1] = ' ';
+				memcpy(&outmessage[4 + sizeofOtherSockName], message, messageLength);
+				outmessage[messageLength + 2] = '\0';*/
+				int bytessend = send(us, oss2.str().c_str(), oss2.str().size() + 1, 0);
 				if (bytessend <= 0)
 				{
 					RemoveUser(us);
 				}
-				delete[] outmessage;
+				//delete[] outmessage;
 			}
 		}
 		break;
@@ -127,7 +136,9 @@ void Server::readMessage(SOCKET sock)
 		uint8_t commandType;
 		int bytesread = recv(sock, (char*)&commandType, 1, 0);
 		if (bytesread <= 0) RemoveUser(sock);
-		std::string list = " ";
+		std::string list;
+		list += static_cast<char>(50);
+		list += " ";
 		switch (commandType)
 		{
 		case static_cast<uint8_t>(User::CommandTypes::REGISTER):
@@ -160,15 +171,12 @@ void Server::readMessage(SOCKET sock)
 				}
 			}
 			list = list.substr(0, list.size() - 2);
-			list += '\0';
 			list[0] = static_cast<char>(list.size() + 2);
 			send(sock, list.c_str(), list.size() + 1, 0);
 			list = list.substr(1, list.size());
 
 			oss << "Sending user " << acceptedSockets[sock] << " the user list:" << std::endl << list << std::endl;
 			PrintAndWrite(oss.str().c_str());
-
-
 			break;
 		case static_cast<uint8_t>(User::CommandTypes::COUNT):
 		default:
@@ -206,10 +214,11 @@ void Server::AddUser()
 	{
 		oss << "Socket " << std::to_string(s) << " tried to connect, but the server was full." << std::endl;
 		PrintAndWrite(oss.str().c_str());
-		char m[20];
-		memcpy(m, " The server is full\0", 20);
-		m[0] = static_cast<char>(20);
-		send(s, m, 20, 0);
+		char m[21];
+		m[0] = static_cast<char>(50);
+		memcpy(m, " The server is full\0", 21);
+		m[1] = static_cast<char>(21);
+		send(s, m, 21, 0);
 		shutdown(s, SD_BOTH);
 		closesocket(s);
 		return;
@@ -218,8 +227,6 @@ void Server::AddUser()
 	acceptedSockets[s] = nullptr;
 	oss << "Socket " << std::to_string(s) << " connected." << std::endl;
 	PrintAndWrite(oss.str().c_str());
-	//std::cout << "Socket " << s << " connected." << std::endl;
-	//AddToFile((char*)[&]() -> std::string {std::string str = "Socket "; str += (char*)&s; str += " connected.\n"; return str; }().c_str()); // TODO
 }
 
 void Server::RemoveUser(SOCKET sock)
@@ -260,10 +267,12 @@ void Server::echoMessage(char* buff)
 			{
 				message[i + 1] = buff[i];
 			}
-			int result = send(master.fd_array[i], message, size + 1, 0);
+			std::ostringstream stream;
+			stream << static_cast<char>(50) << message;
+			int result = send(master.fd_array[i], stream.str().c_str(), stream.str().size(), 0);
 			if (result == SOCKET_ERROR || result <= 0)
 			{
-				int t = 0;
+				RemoveUser(master.fd_array[i]);
 			}
 		}
 	}

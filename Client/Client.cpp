@@ -3,8 +3,6 @@
 #include "framework.h"
 #include "Client.h"
 #include <WS2tcpip.h>
-#include <iostream>
-#include <string.h>
 #include <thread>
 
 
@@ -181,19 +179,29 @@ void Client::sendCommand(SOCKET sock, char* buff, const int32_t length)
 
 void Client::receiveEcho(SOCKET sock, char*& buff)
 {
-	int8_t size;
-	int result = recv(sock, (char*)&size, 1, 0);
-	if (result <= 0)
+	int8_t type;
+	int result = recv(sock,(char*) & type, 1, 0);
+	if (type == 50)
 	{
-		CloseServer();
-		return;
+
+		int8_t size;
+		int result = recv(sock, (char*)&size, 1, 0);
+		if (result <= 0)
+		{
+			CloseServer();
+			return;
+		}
+		buff = new char[size + 1];
+		result = recv(sock, buff, size + 1, 0);
+		if (result <= 0)
+		{
+			CloseServer();
+			return;
+		}
 	}
-	buff = new char[size + 1];
-	result = recv(sock, buff, size + 1, 0);
-	if (result <= 0)
+	else
 	{
-		CloseServer();
-		return;
+
 	}
 }
 
