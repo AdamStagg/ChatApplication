@@ -1,12 +1,12 @@
 // Client.cpp : Defines the exported functions for the DLL.
 //
-
 #include "framework.h"
 #include "Client.h"
 #include <WS2tcpip.h>
 #include <iostream>
-#include <string>
+#include <string.h>
 #include <thread>
+
 
 void Client::Run()
 {
@@ -23,17 +23,14 @@ void Client::Run()
 		std::cin.getline(userInput, 256);
 		if (userInput && userInput[0] == '$')
 		{
-
+			sendCommand(sock, userInput, sizeofString(userInput, 256) - 1);
 		}
 		else
 		{
 			sendMessage(sock, userInput, sizeofString(userInput, 256) - 1);
 		}
-		if (strstr(userInput, "$exit") != nullptr) { break; }
+		if (strstr(userInput, "$exit") != nullptr || !serverRunning) { break; }
 		delete[] userInput;
-
-
-		
 	}
 
 	(*stopThreadFlag) = true;
@@ -137,8 +134,49 @@ void Client::sendMessage(SOCKET sock, char* buff, const int32_t length)
 	//message += (char*)&length;
 	//message += buff;
 	int t = 0;
-	send(sock, arr, length + 3, 0);
+	int bytessent = send(sock, arr, length + 3, 0);
+	if (bytessent <= 0)
+	{
+		CloseServer();
+	}
 	delete[] arr;
+}
+
+void Client::sendCommand(SOCKET sock, char* buff, const int32_t length)
+{
+	char* message;
+	
+	char commandType;
+	if (strstr(tolower(buff, length), "$register"))
+	{
+		char len = static_cast<char>(username.size() + 4);
+		message = new char[len];
+		commandType = static_cast<char>(CommandTypes::REGISTER);
+		message[2] = static_cast<char>(username.size() + 1);
+		memcpy(&message[3], username.c_str(), username.size() + 1);
+	}
+	else
+	{
+		message = new char[3];
+		if (strstr(tolower(buff, length), "$exit"))
+			commandType = static_cast<char>(CommandTypes::EXIT);
+		else if (strstr(tolower(buff, length), "$getlog"))
+			commandType = static_cast<char>(CommandTypes::GETLOG);
+		else if (strstr(tolower(buff, length), "$getlist"))
+			commandType = static_cast<char>(CommandTypes::GETLIST);
+		else commandType = 0;
+		message[2] = '\0';
+	}
+
+	message[0] = static_cast<char>(MessageTypes::COMMAND);
+	message[1] = commandType;
+
+	int bytessent = send(sock, message, sizeofString(message, 256), 0);
+	if (bytessent <= 0)
+	{
+		CloseServer();
+	}
+	delete[] message;
 }
 
 void Client::receiveEcho(SOCKET sock, char*& buff)
@@ -147,14 +185,14 @@ void Client::receiveEcho(SOCKET sock, char*& buff)
 	int result = recv(sock, (char*)&size, 1, 0);
 	if (result <= 0)
 	{
-		std::cout << "The server has been closed." << std::endl;
+		CloseServer();
 		return;
 	}
 	buff = new char[size + 1];
 	result = recv(sock, buff, size + 1, 0);
 	if (result <= 0)
 	{
-		std::cout << "The server has been closed." << std::endl;
+		CloseServer();
 		return;
 	}
 }
@@ -172,12 +210,25 @@ void Client::receiveMessage(bool* stopFlag)
 		if (select(0, &set, nullptr, nullptr, nullptr))
 		{
 			receiveEcho(sock, message);
+			if (!serverRunning) 
+			{
+				(*stopFlag) = true;
+				break;
+			}
 			if (message != nullptr)
 			{
 				//std::cout << "echo received" << std::endl;
-				std::cout << message << std::endl;
+				std::cout << std::endl << message << std::endl << username << ": ";
 			}
 		}
 	}
 	delete stopFlag;
+}
+
+void Client::CloseServer()
+{
+	shutdown(sock, SD_BOTH);
+	closesocket(sock);
+	serverRunning = false;
+	std::cout << std::endl << "The server has been closed." << std::endl;
 }

@@ -12,30 +12,32 @@
 
 #include <map>
 #include "../User/User.h"
+#include <sstream>
 
 class Server : public User
 {
 public:
 	void Run();
 private:
-	struct UserData
-	{
-		char* username;
-	};
+	char* fileName;
+	int8_t maxClients;
 	SOCKET listenSocket;
-	std::map<SOCKET, UserData> acceptedSockets;
+	int16_t port;
+	std::ostringstream oss;
+	std::map<SOCKET, char*> acceptedSockets;
 	void Stop();
 	FD_SET master;
 	FD_SET read;
-	FD_SET write;
-	void readMessage(SOCKET sock, char*& buff);
+	void readMessage(SOCKET sock);
+	void AddUser();
 	void RemoveUser(SOCKET s);
 	void echoMessage(char* buff);
 	char* GetName(SOCKET s);
 	bool UserRegistered(SOCKET s);
-	void AddToFile(char* buf);
+	void AddToFile(const char* buf);
 	void InitializeFile();
-	char* fileName;
+	void InitializeServer();
+	void PrintAndWrite(const char* buffToWrite);
 };
 
 extern "C" SERVER_API User * GenerateUser();

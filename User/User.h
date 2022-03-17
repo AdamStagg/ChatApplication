@@ -1,4 +1,6 @@
 #pragma once
+#define _GNU_SOURCE
+
 #include <iostream>
 #include "../Chat Application/Utils.h"
 #include <WinSock2.h>
@@ -25,7 +27,7 @@ public:
     };
     enum class CommandTypes
     {
-        REGISTER = 1000,
+        REGISTER = 10,
         GETLOG,
         GETLIST,
         EXIT,

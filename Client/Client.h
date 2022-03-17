@@ -20,11 +20,14 @@ public:
 private:
 	SOCKET sock;
 	std::string username;
+	bool serverRunning = true;
 	void Stop();
 	void ConnectToServer();
 	void sendMessage(SOCKET sock, char* buff, const int32_t length);
+	void sendCommand(SOCKET sock, char* buff, const int32_t length);
 	void receiveEcho(SOCKET sock, char*& buff);
 	void receiveMessage(bool* stopflag);
+	void CloseServer();
 };
 
 extern "C" CLIENT_API User* GenerateUser();

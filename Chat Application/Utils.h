@@ -70,3 +70,15 @@ int sizeofString(char* buffer, int maxLength)
 	}
 	return maxLength;
 }
+
+char* tolower(const char* buff, int size)
+{
+	char* word = (char*)buff;
+
+	for (size_t i = 1; i < size; i++)
+	{
+		if (word[i] < 97) word[i] = word[i] + 32;
+	}
+
+	return word;
+}
