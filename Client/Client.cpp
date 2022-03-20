@@ -6,6 +6,7 @@
 #include <thread>
 
 
+
 void Client::Run()
 {
 	Client::ConnectToServer();
@@ -181,7 +182,7 @@ void Client::receiveEcho(SOCKET sock, char*& buff)
 {
 	int8_t type;
 	int result = recv(sock,(char*) & type, 1, 0);
-	if (type == 50)
+	if (type == static_cast<int>(SendTypes::SINGLE))
 	{
 
 		int8_t size;
@@ -201,7 +202,29 @@ void Client::receiveEcho(SOCKET sock, char*& buff)
 	}
 	else
 	{
+		char line[256];
+		line[255] = '\0';
+		FILE* f;
+		std::ostringstream stream;
+		stream << "../" << "log_client.txt";
+		fopen_s(&f, stream.str().c_str(), "w");
+		if (f)
+		{
+			while ((strstr(line, "##ENDFILE") == nullptr))
+			{
 
+				int bytesread = recv(sock, line, sizeof(line) - 1, 0);
+				if (bytesread <= 0)
+				{
+					CloseServer();
+				}
+				//if (strstr(line, "##ENDFILE") != nullptr) break;
+				fputs(line, f);
+			}
+			buff = new char[sizeof("The log has been received.")+2];
+			memcpy(buff, "The log has been received.\n\0", sizeof("The log has been received.\n\0"));
+			fclose(f);
+		}
 	}
 }
 

@@ -12,7 +12,6 @@
 
 #include <map>
 #include "../User/User.h"
-#include <sstream>
 
 class Server : public User
 {

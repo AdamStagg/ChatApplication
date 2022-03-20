@@ -6,6 +6,7 @@
 #include <WinSock2.h>
 #pragma comment(lib, "ws2_32.lib")
 #include "../Chat Application/Utils.h"
+#include <sstream>
 
 class User
 {
@@ -23,6 +24,12 @@ public:
     {
         MESSAGE = 100,
         COMMAND,
+        COUNT
+    };
+    enum class SendTypes
+    {
+        SINGLE = 50,
+        STREAM,
         COUNT
     };
     enum class CommandTypes

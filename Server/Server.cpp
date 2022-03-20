@@ -3,6 +3,8 @@
 
 #include "framework.h"
 #include "Server.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 void Server::Run()
 {
@@ -95,7 +97,7 @@ void Server::readMessage(SOCKET sock)
 		//DISPLAY MESSAGE
 		oss << ((GetName(sock) != nullptr) ? GetName(sock) : ("Socket " + sock)) << ": " << message << std::endl;
 		std::ostringstream oss2;
-		oss2 << static_cast<char>(50) << static_cast<char>(sizeofString((char*)oss.str().c_str(), 256)) << ((GetName(sock) != nullptr) ? GetName(sock) : ("Socket " + sock)) << ": " << message << std::endl;
+		oss2 << static_cast<char>(SendTypes::SINGLE) << static_cast<char>(sizeofString((char*)oss.str().c_str(), 256)) << ((GetName(sock) != nullptr) ? GetName(sock) : ("Socket " + sock)) << ": " << message << std::endl;
 		PrintAndWrite(oss.str().c_str());
 		//AddToFile((char*)[&]() -> std::string {std::string s = GetName(sock); s += ": "; s+= message; return s; }().c_str()); // TODO
 
@@ -136,8 +138,12 @@ void Server::readMessage(SOCKET sock)
 		uint8_t commandType;
 		int bytesread = recv(sock, (char*)&commandType, 1, 0);
 		if (bytesread <= 0) RemoveUser(sock);
+		FILE* f;
+		std::ostringstream s;
 		std::string list;
-		list += static_cast<char>(50);
+		char lineBuf[256];
+		std::string line;
+		list += static_cast<char>(SendTypes::SINGLE);
 		list += " ";
 		switch (commandType)
 		{
@@ -154,6 +160,43 @@ void Server::readMessage(SOCKET sock)
 
 			break;
 		case static_cast<uint8_t>(User::CommandTypes::GETLOG):
+			//s << "../" << fileName;
+			fopen_s(&f, fileName, "r");
+			
+			if (bytesread <= 0)
+			{
+				RemoveUser(sock);
+			}
+			if (f)
+			{
+				char stype = static_cast<char>(SendTypes::STREAM);
+				bytesread = send(sock, &stype, 1, 0);
+				if (bytesread <= 0)
+				{
+					RemoveUser(sock);
+				}
+				while (fgets(lineBuf, sizeof(lineBuf), f))
+				{
+					//lineBuf[0] = static_cast<char>(SendTypes::STREAM);
+					bytesread = send(sock, lineBuf, sizeof(lineBuf) -1, 0);
+					if (bytesread <= 0)
+					{
+						RemoveUser(sock);
+					}
+				}
+
+				bytesread = send(sock, "###ENDFILE\0", sizeof("###ENDFILE\0"), 0);
+				if (bytesread <= 0)
+				{
+					RemoveUser(sock);
+				}
+
+				oss << "Send the log to user " << GetName(sock) << std::endl;
+				PrintAndWrite(oss.str().c_str());
+				fclose(f);
+			}
+			else PrintAndWrite("There was no file found...\n");
+
 			break;
 		case static_cast<uint8_t>(User::CommandTypes::GETLIST):
 			for (auto& user : acceptedSockets)
@@ -171,9 +214,9 @@ void Server::readMessage(SOCKET sock)
 				}
 			}
 			list = list.substr(0, list.size() - 2);
-			list[0] = static_cast<char>(list.size() + 2);
+			list[1] = static_cast<char>(list.size() + 2);
 			send(sock, list.c_str(), list.size() + 1, 0);
-			list = list.substr(1, list.size());
+			list = list.substr(2, list.size());
 
 			oss << "Sending user " << acceptedSockets[sock] << " the user list:" << std::endl << list << std::endl;
 			PrintAndWrite(oss.str().c_str());
@@ -215,7 +258,7 @@ void Server::AddUser()
 		oss << "Socket " << std::to_string(s) << " tried to connect, but the server was full." << std::endl;
 		PrintAndWrite(oss.str().c_str());
 		char m[21];
-		m[0] = static_cast<char>(50);
+		m[0] = static_cast<char>(SendTypes::SINGLE);
 		memcpy(m, " The server is full\0", 21);
 		m[1] = static_cast<char>(21);
 		send(s, m, 21, 0);
@@ -268,7 +311,7 @@ void Server::echoMessage(char* buff)
 				message[i + 1] = buff[i];
 			}
 			std::ostringstream stream;
-			stream << static_cast<char>(50) << message;
+			stream << static_cast<char>(SendTypes::SINGLE) << message;
 			int result = send(master.fd_array[i], stream.str().c_str(), stream.str().size(), 0);
 			if (result == SOCKET_ERROR || result <= 0)
 			{
@@ -301,7 +344,7 @@ void Server::AddToFile(const char* buff)
 
 void Server::InitializeFile()
 {
-	fileName = (char*)"../Server/log_test.txt";
+	fileName = (char*)"../log_server.txt";
 	FILE* pFile;
 	errno_t err = fopen_s(&pFile, fileName, "w");
 	if (pFile) fclose(pFile);
