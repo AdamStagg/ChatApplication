@@ -3,12 +3,12 @@ A chatting application using multi-threaded server requests using TCP connection
 
 
 ## Features
-A server able to host on any port
-Multiple clients able to connect to the server
-Clients are able to send messages or commands to the server over the network
+A server able to host on any port  
+Multiple clients able to connect to the server  
+Clients are able to send messages or commands to the server over the network  
 
 ##### Note:
-If you are unable to connect across networks, try port-forwarding the port you are using with the server
+If you are unable to connect across networks, try port-forwarding the port you are using with the server  
 
 
 ## Installation:
