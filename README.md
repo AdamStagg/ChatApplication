@@ -7,7 +7,7 @@ A server able to host on any port
 Multiple clients able to connect to the server
 Clients are able to send messages or commands to the server over the network
 
-#####Note:
+##### Note:
 If you are unable to connect across networks, try port-forwarding the port you are using with the server
 
 
