@@ -71,6 +71,12 @@ int sizeofString(char* buffer, int maxLength)
 	return maxLength;
 }
 
+/// <summary>
+/// A function that converts a string to lowercase
+/// </summary>
+/// <param name="buff">The string</param>
+/// <param name="size">The size of the array</param>
+/// <returns></returns>
 char* tolower(const char* buff, int size)
 {
 	char* word = (char*)buff;

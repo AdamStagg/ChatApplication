@@ -8,10 +8,14 @@
 #include "../Chat Application/Utils.h"
 #include <sstream>
 
+
+/// <summary>
+/// An abstract base class for a user of the chat application
+/// </summary>
 class User
 {
 public:
-    virtual void Run() = 0;
+    virtual void Run() = 0; //Abstract run method
     enum class ErrorTypes
     {
         SUCCESS, 
@@ -45,7 +49,7 @@ private:
 protected:
     void Clear()
     { 
-        std::cout << "\x1B[2J\x1B[H";
+        std::cout << "\x1B[2J\x1B[H"; 
     }
     ErrorTypes ErrorCheck(int input)
     {
